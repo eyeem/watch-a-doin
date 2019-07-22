@@ -71,9 +71,15 @@ class SvgReport(val timelines: List<Timeline>) {
 
             val alpha = 0.25f + max(0f, 0.75f - 0.2f * timeline.nestLvl)
 
+            val rectWidth = (timeline.duration * xScale).toLong()
+            val rectHeight = timelineHeight
+
             output += """<g>
-                           <rect x="$x1" y="$y1" width="${(timeline.duration * xScale).toLong()}" height="$timelineHeight" style="fill:rgba($sqColor,$alpha);"></rect>
-                           <text x="${x1 + padding}" y="$y1Text" font-family="Verdana" font-size="$fontSize" fill="#000000">${timeline.name}</text>
+                           <rect x="$x1" y="$y1" width="$rectWidth" height="$rectHeight" style="fill:rgba($sqColor,$alpha);"></rect>
+                           <text x="${x1 + padding}" y="$y1Text" font-family="Verdana" font-size="$fontSize" fill="#000000" clip-path="url(#clip$index)">${timeline.name}</text>
+                           <clipPath id="clip$index">
+                             <rect x="$x1" y="$y1" width="$rectWidth" height="$rectHeight"/>
+                           </clipPath>
                          </g>""".trimIndent()
         }
 
