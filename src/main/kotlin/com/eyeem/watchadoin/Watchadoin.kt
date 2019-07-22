@@ -15,6 +15,12 @@ import kotlin.math.roundToLong
 class Stopwatch(val name: String) {
 
     /**
+     * Thread on which this stopwatch was executed
+     */
+    var tid : Long = 0
+        private set
+
+    /**
      * Time of start
      */
     var start : Long = 0
@@ -68,6 +74,7 @@ class Stopwatch(val name: String) {
         if (isRunning) return
         start = System.currentTimeMillis()
         isRunning = true
+        tid = Thread.currentThread().id
     }
 
     /**
@@ -120,6 +127,7 @@ class Stopwatch(val name: String) {
         val timelines = ArrayList<Timeline>()
         val timeline = Timeline(
                 name = name,
+                tid = tid,
                 duration = duration(),
                 relativeStart = relativeStartTime,
                 timeout = timeoutAt > 0L,
@@ -129,7 +137,7 @@ class Stopwatch(val name: String) {
         timelines += timeline
 
         children.forEach {
-            timelines += it.timelines(nestLvl + 1, startTime, timeline)
+            timelines += it.timelines(nestLvl + 1, startTime, timeline, includeParent)
         }
 
         return timelines
@@ -142,6 +150,7 @@ class Stopwatch(val name: String) {
  * Report counterpart of the [Stopwatch] class
  *
  * @param name name of the timeline
+ * @param tid thread ID
  * @param duration duration in ms of this timeline
  * @param relativeStart relativeStart (counting from the first timeline in the group) in ms of this timeline
  * @param timeout whether or not this timeline timed out
@@ -150,6 +159,7 @@ class Stopwatch(val name: String) {
  */
 data class Timeline(
         val name: String,
+        val tid: Long,
         val duration : Long,
         val relativeStart : Long,
         val timeout: Boolean,

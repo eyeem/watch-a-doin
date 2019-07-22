@@ -74,4 +74,4 @@ Will print this:
 
 and create the following SVG:
 
-![Screenshot 2019-07-22 at 14 44 51](https://user-images.githubusercontent.com/121164/61633408-4e91f580-ac8f-11e9-9506-07bf29644cf8.png)
+![Screenshot 2019-07-22 at 17 18 31](https://user-images.githubusercontent.com/121164/61644309-c0286e80-aca4-11e9-9e30-083eb22a35fd.png)

@@ -14,6 +14,7 @@ class SvgReport(val timelines: List<Timeline>) {
     private val padding = 10
     private val timelineHeight = 30
     private val fontSize = 12
+    private val smallFontSize = 8
     private val xAxisHeight = 8
     private val scaleGridDistance = 50
 
@@ -23,22 +24,23 @@ class SvgReport(val timelines: List<Timeline>) {
     /**
      * @return SVG formatted string with the report in it
      */
-    override fun toString() : String {
+    override fun toString(): String {
         var xScale = 1.0f
-        val scaleLength = timelines.map { it.duration + it.relativeStart }.maxBy { it } ?: throw IllegalStateException("no maximum found")
+        val scaleLength = timelines.map { it.duration + it.relativeStart }.maxBy { it }
+            ?: throw IllegalStateException("no maximum found")
         val scaleSteps = scaleLength / scaleGridDistance
         val svgWidth = scaleLength + padding * 2
         if (svgWidth > maxPageWidth) {
             xScale = maxPageWidth.toFloat() / svgWidth.toFloat()
         }
 
-        var timelinesSvg : String = "" // timelines as svg tags
+        var timelinesSvg: String = "" // timelines as svg tags
 
         // collects timelines as we draw them, int here is a raw in which we draw timeline
         val rects = HashMap<Int, ArrayList<Rect>>()
         timelines.forEachIndexed { index, timeline ->
 
-            val heightIndex = rects.firstAvailableRow(timeline.asTimerange())
+            val heightIndex = rects.firstAvailableRow(timeline)
 
             val _y1 = (heightIndex + 1) * padding + heightIndex * timelineHeight
             val _y1Text = (_y1 + (timelineHeight - fontSize)).toLong()
@@ -60,22 +62,28 @@ class SvgReport(val timelines: List<Timeline>) {
                 },
                 alpha = 0.25f + max(0f, 0.75f - 0.2f * timeline.nestLvl),
                 fontSize = fontSize,
+                smallFontSize = smallFontSize,
                 padding = padding,
-                clipIndex = index
+                clipIndex = index,
+                rowIndex = heightIndex
             )
 
             val rowTimelines = rects[heightIndex] ?: ArrayList<Rect>().apply {
                 rects[heightIndex] = this
             }
+            println("adding ${timeline.name} to row $heightIndex")
             rowTimelines += rect
 
             timelinesSvg += rect.asSvgTimelineTag()
+        }
+        rects.forEach { (row, rects) ->
+            println("row $row -> ${rects.map { it.timeline.name }.joinToString(separator = ",")}")
         }
 
         val rowCount = rects.values.size
         val svgHeight = (rowCount + 1) * padding + rowCount * timelineHeight + xAxisHeight + padding
 
-        var output = """<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth*xScale}" height="$svgHeight">"""
+        var output = """<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth * xScale}" height="$svgHeight">"""
 
         // draw the timeline grid and axis
         val omit = (1f / xScale).roundToLong()
@@ -94,10 +102,9 @@ class SvgReport(val timelines: List<Timeline>) {
 
             output += """<g>
                             <line stroke-dasharray="5, 5" x1="$x" y1="$y1" x2="$x" y2="${y1 + yLength}" style="stroke-width:1;stroke:rgba(0,0,0,0.5)"/>
-                            <text x="$x" y="${y1 + yLength + padding}" font-family="Verdana" font-size="$xAxisHeight" fill="#00000077">${scaleStep*scaleGridDistance}ms</text>
+                            <text x="$x" y="${y1 + yLength + padding}" font-family="Verdana" font-size="$xAxisHeight" fill="#00000077">${scaleStep * scaleGridDistance}ms</text>
                          </g>""".trimIndent()
         }
-
 
         output += timelinesSvg
 
@@ -107,7 +114,7 @@ class SvgReport(val timelines: List<Timeline>) {
 
 }
 
-fun Stopwatch.asSvgReport() : SvgReport = SvgReport(timelines(includeParent = true))
+fun Stopwatch.asSvgReport(): SvgReport = SvgReport(timelines(includeParent = true))
 
 fun Stopwatch.saveAsSvg(file: File) {
     val svgOutput = asSvgReport().toString()
@@ -123,7 +130,11 @@ private data class Rect(
     val alpha: Float,
     val padding: Int,
     val clipIndex: Int,
-    val fontSize: Int)
+    val rowIndex: Int,
+    val fontSize: Int,
+    val smallFontSize: Int
+)
+
 private val Rect.width
     get() = x2 - x1
 
@@ -133,33 +144,75 @@ private val Rect.height
 private fun Rect.asSvgTimelineTag() =
     """<g>
          <rect x="$x1" y="$y1" width="$width" height="$height" style="fill:rgba($fillColor,$alpha);"></rect>
-         <rect x="${x2-1}" y="$y1" width="2" height="$height" style="fill:rgba(0,0,0,1);"></rect>
+         <rect x="${x2 - 1}" y="$y1" width="2" height="$height" style="fill:rgba(0,0,0,1);"></rect>
          <text x="${x1 + padding}" y="$y1Text" font-family="Verdana" font-size="$fontSize" fill="#000000" clip-path="url(#clip$clipIndex)">${timeline.name}</text>
+         <text x="${x1 + padding}" y="${y1Text+fontSize * 0.8}" font-family="Verdana" font-size="$smallFontSize" fill="#000000" clip-path="url(#clip$clipIndex)">tid=${timeline.tid}</text>
          <clipPath id="clip$clipIndex">
            <rect x="$x1" y="$y1" width="$width" height="$height"/>
          </clipPath>
        </g>""".trimIndent()
 
-typealias Timerange = Pair<Long, Long>
-private infix fun Long.between(range: Timerange) = (this > range.first && this < range.second) || (this == range.first && range.first == range.second)
-private infix fun Timerange.intersects(range: Timerange) : Boolean = first between range || second between range
-private fun Timeline.asTimerange() : Timerange = relativeStart to (relativeStart + duration)
 
-private fun HashMap<Int, ArrayList<Rect>>.firstAvailableRow(timerange: Timerange) : Int {
-    var currentIndex = 0
+private fun Long.between(lower: Long, upper: Long): Boolean = this > lower && this < upper
 
-    while (true) {
-        val rects = get(currentIndex)
-        if (rects.isNullOrEmpty()) {
-            return currentIndex
-        } else {
-            // check if our timerange doesn't collide with any existing timerange
-            if (rects.map {
-                    timerange intersects it.timeline.asTimerange()
-                }.firstOrNull { it } == null) {
-                return currentIndex
+private infix fun Timeline.collidesWith(other: Timeline): Boolean {
+    val start = this.relativeStart
+    val end = this.relativeStart + this.duration
+    val otherStart = other.relativeStart
+    val otherEnd = other.relativeStart + other.duration
+
+    if (start == otherStart || end == otherEnd) return true
+
+    return start.between(otherStart, otherEnd) || end.between(otherStart, otherEnd) || otherStart.between(
+        start,
+        end
+    ) || otherEnd.between(start, end)
+}
+
+private fun HashMap<Int, ArrayList<Rect>>.findParentRect(timeline: Timeline): Rect? {
+    var parent = timeline.parent ?: return null
+    val n = keys.maxBy { it } ?: 0
+    for (i in 0..n) {
+        val timelines = this[i] ?: return null
+        timelines.forEach {
+            if (it.timeline == parent) {
+                return it
             }
         }
-        currentIndex++
+    }
+
+    return null
+}
+
+private fun List<Rect>?.isColliding(timeline: Timeline) : Boolean {
+
+    if (this == null)
+        return false
+
+    forEach {
+        if (it.timeline collidesWith timeline) {
+            return true
+        }
+    }
+    return false
+}
+
+private fun HashMap<Int, ArrayList<Rect>>.firstAvailableRow(timeline: Timeline): Int {
+
+
+
+    val parentRect = findParentRect(timeline)
+
+    var currentRow = parentRect?.rowIndex?.let { it + 1 } ?: 0
+
+
+
+    while (true) {
+
+        if (!this[currentRow].isColliding(timeline)) {
+            return currentRow
+        }
+
+        currentRow++
     }
 }
