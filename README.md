@@ -16,11 +16,11 @@ Make sure you have added jitpack to the list of your repositories:
 maven("https://jitpack.io")
 ```
 
-Then simply add the `watchadoin` dependency
+Then simply add the `watch-a-doin` dependency
 
 ```kotlin
 dependencies {
-    compile("com.github.eyeem:watchadoin:master-SNAPSHOT")
+    compile("com.github.eyeem:watch-a-doin:master-SNAPSHOT")
 }
 ```
 
@@ -30,11 +30,11 @@ dependencies {
 val loopWatch = Stopwatch("🔁 loop")
 
 fun expensiveOperation(stopwatch: Stopwatch) = stopwatch {
-    Thread.sleep(100)
+    Thread.sleep(125)
 }
 
 fun moreExpensiveOperation(stopwatch: Stopwatch) = stopwatch {
-    Thread.sleep(500)
+    Thread.sleep(375)
 }
 
 loopWatch {
@@ -74,4 +74,4 @@ Will print this:
 
 and create the following SVG:
 
-![Screenshot 2019-07-22 at 17 18 31](https://user-images.githubusercontent.com/121164/61644309-c0286e80-aca4-11e9-9e30-083eb22a35fd.png)
+![Screenshot 2019-07-22 at 17 53 01](https://user-images.githubusercontent.com/121164/61646360-a76e8780-aca9-11e9-92f3-cf3181f259d2.png)

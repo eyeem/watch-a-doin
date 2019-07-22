@@ -37,7 +37,7 @@ class WatchadoinTest {
 
         loopWatch {
             for (i in 0 until 4) {
-                val iterationWatch = loopWatch["⏭️ iteration"]
+                val iterationWatch = loopWatch["⏭️ iteration $i"]
                 iterationWatch {
                     expensiveSleep(iterationWatch["🕰️"])
 
@@ -54,7 +54,7 @@ class WatchadoinTest {
     }
 
     @Test
-    fun `Test 2 - Linear Sleep On Coroutines`() = runBlocking{
+    fun `Test 2 - Sleep On Coroutines`() = runBlocking{
         val loopWatch = Stopwatch("🔁 loop")
 
         loopWatch {
@@ -62,7 +62,7 @@ class WatchadoinTest {
 
             for (i in 0 until 4) {
                 jobs += scope.async {
-                    val iterationWatch = loopWatch["⏭️ iteration"]
+                    val iterationWatch = loopWatch["⏭️ iteration $i"]
                     iterationWatch {
                         expensiveSleep(iterationWatch["🕰️"])
 
