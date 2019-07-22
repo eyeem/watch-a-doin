@@ -8,11 +8,11 @@ class WatchadoinTest {
     fun test1() {
         val loopWatch = Stopwatch("loop")
 
-        fun expensiveOperation() {
+        fun expensiveOperation(stopwatch: Stopwatch) = stopwatch {
             Thread.sleep(100)
         }
 
-        fun moreExpensiveOperation() {
+        fun moreExpensiveOperation(stopwatch: Stopwatch) = stopwatch {
             Thread.sleep(500)
         }
 
@@ -20,25 +20,17 @@ class WatchadoinTest {
             for (i in 0 until 4) {
                 val iterationWatch = loopWatch["iteration $i"]
                 iterationWatch {
-                    iterationWatch["expensiveOperation"] {
-                        expensiveOperation()
-                    }
+                    expensiveOperation(iterationWatch["expensiveOperation"])
 
-                    iterationWatch["moreExpensiveOperation"] {
-                        moreExpensiveOperation()
-                    }
+                    moreExpensiveOperation(iterationWatch["moreExpensiveOperation"])
                 }
             }
         }
 
-        val timelines = loopWatch.timelines()
-        timelines.forEach {
-            println(it.report())
-        }
+        println(loopWatch.toStringPretty())
 
-        val svgOutput = SvgReport(timelines).print()
         val svgFile = File("test1.svg")
-        svgFile.printWriter().use { out -> out.println(svgOutput) }
+        loopWatch.saveAsSvg(svgFile)
         println("SVG timeline report saved to file://${svgFile.absolutePath}")
     }
 }

@@ -27,11 +27,11 @@ dependencies {
 ```kotlin
 val loopWatch = Stopwatch("root")
 
-fun expensiveOperation() {
+fun expensiveOperation(stopwatch: Stopwatch) = stopwatch {
     Thread.sleep(100)
 }
 
-fun moreExpensiveOperation() {
+fun moreExpensiveOperation(stopwatch: Stopwatch) = stopwatch {
     Thread.sleep(500)
 }
 
@@ -39,24 +39,16 @@ loopWatch {
     for (i in 0 until 4) {
         val iterationWatch = loopWatch["iteration $i"]
         iterationWatch {
-            iterationWatch["expensiveOperation"] {
-                expensiveOperation()
-            }
+            expensiveOperation(iterationWatch["expensiveOperation"])
 
-            iterationWatch["moreExpensiveOperation"] {
-                moreExpensiveOperation()
-            }
+            moreExpensiveOperation(iterationWatch["moreExpensiveOperation"])
         }
     }
 }
 
-val timelines = loopWatch.timelines()
-timelines.forEach {
-    println(it.report())
-}
+println(loopWatch.toStringPretty())
 
-val svgOutput = SvgReport(timelines).print()
-svgFile.printWriter().use { out -> out.println(svgOutput) }
+loopWatch.saveAs(File("loopWatch.svg"))
 
 ```
 
