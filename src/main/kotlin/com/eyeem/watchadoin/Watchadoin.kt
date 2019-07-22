@@ -17,7 +17,8 @@ class Stopwatch(val name: String) {
     /**
      * Time of start
      */
-    private var start : Long = 0
+    var start : Long = 0
+        private set
 
     /**
      * Time of end
@@ -32,7 +33,8 @@ class Stopwatch(val name: String) {
     /**
      * Time at which timeout occurred
      */
-    private var timeoutAt : Long = 0L
+    var timeoutAt : Long = 0L
+        private set
 
     /**
      * Child watches (a.k.a. nested timelines)

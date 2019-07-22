@@ -74,4 +74,4 @@ Will print this:
 
 and create the following SVG:
 
-![](https://user-images.githubusercontent.com/121164/61623723-7e350380-ac77-11e9-8d92-757df828e4a4.png)
+![Screenshot 2019-07-22 at 14 44 51](https://user-images.githubusercontent.com/121164/61633408-4e91f580-ac8f-11e9-9506-07bf29644cf8.png)
