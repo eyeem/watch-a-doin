@@ -1,4 +1,6 @@
-![](https://media.giphy.com/media/XcYIX8UQuhKRbdEp2z/giphy.gif)
+# Watch-A-Doin'?
+
+![](https://media.giphy.com/media/l0MYOUI5XfRk4LLWM/giphy.gif)
 
 Simple Kotlin library that can be used to monitor timings of some expensive operations and nested calls they make.
 
@@ -25,7 +27,7 @@ dependencies {
 ## Example usage
 
 ```kotlin
-val loopWatch = Stopwatch("root")
+val loopWatch = Stopwatch("🔁 loop")
 
 fun expensiveOperation(stopwatch: Stopwatch) = stopwatch {
     Thread.sleep(100)
@@ -37,11 +39,11 @@ fun moreExpensiveOperation(stopwatch: Stopwatch) = stopwatch {
 
 loopWatch {
     for (i in 0 until 4) {
-        val iterationWatch = loopWatch["iteration $i"]
+        val iterationWatch = loopWatch["⏭️ iteration $i"]
         iterationWatch {
-            expensiveOperation(iterationWatch["expensiveOperation"])
+            expensiveOperation(iterationWatch["🕰️"])
 
-            moreExpensiveOperation(iterationWatch["moreExpensiveOperation"])
+            moreExpensiveOperation(iterationWatch["🕰 x3"])
         }
     }
 }
@@ -55,21 +57,21 @@ loopWatch.saveAs(File("loopWatch.svg"))
 Will print this:
 
 ```
-loop [2410ms @0ms]
- iteration 0 [602ms @0ms]
-  expensiveOperation [102ms @0ms]
-  moreExpensiveOperation [500ms @102ms]
- iteration 1 [601ms @602ms]
-  expensiveOperation [100ms @602ms]
-  moreExpensiveOperation [501ms @702ms]
- iteration 2 [601ms @1203ms]
-  expensiveOperation [100ms @1203ms]
-  moreExpensiveOperation [500ms @1303ms]
- iteration 3 [606ms @1804ms]
-  expensiveOperation [102ms @1804ms]
-  moreExpensiveOperation [504ms @1906ms]
+🔁 loop [2018ms @0ms]
+ ⏭️ iteration 0 [506ms @0ms]
+  🕰️ [127ms @0ms]
+  🕰 x3 [379ms @127ms]
+ ⏭️ iteration 1 [506ms @506ms]
+  🕰️ [127ms @506ms]
+  🕰 x3 [379ms @633ms]
+ ⏭️ iteration 2 [503ms @1012ms]
+  🕰️ [128ms @1012ms]
+  🕰 x3 [375ms @1140ms]
+ ⏭️ iteration 3 [503ms @1515ms]
+  🕰️ [128ms @1515ms]
+  🕰 x3 [375ms @1643ms]
 ```
 
 and create the following SVG:
 
-![](https://user-images.githubusercontent.com/121164/61558196-a7cb1080-aa66-11e9-9cf7-4ec83199f5f1.png)
+![](https://user-images.githubusercontent.com/121164/61623723-7e350380-ac77-11e9-8d92-757df828e4a4.png)

@@ -6,23 +6,23 @@ import java.io.File
 class WatchadoinTest {
     @Test
     fun test1() {
-        val loopWatch = Stopwatch("loop")
+        val loopWatch = Stopwatch("🔁 loop")
 
         fun expensiveOperation(stopwatch: Stopwatch) = stopwatch {
-            Thread.sleep(100)
+            Thread.sleep(125)
         }
 
         fun moreExpensiveOperation(stopwatch: Stopwatch) = stopwatch {
-            Thread.sleep(500)
+            Thread.sleep(375)
         }
 
         loopWatch {
             for (i in 0 until 4) {
-                val iterationWatch = loopWatch["iteration $i"]
+                val iterationWatch = loopWatch["⏭️ iteration $i"]
                 iterationWatch {
-                    expensiveOperation(iterationWatch["expensiveOperation"])
+                    expensiveOperation(iterationWatch["🕰️"])
 
-                    moreExpensiveOperation(iterationWatch["moreExpensiveOperation"])
+                    moreExpensiveOperation(iterationWatch["🕰 x3"])
                 }
             }
         }
