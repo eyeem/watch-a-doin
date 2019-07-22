@@ -1,2 +1,2 @@
-rootProject.name = "watchadoin"
+rootProject.name = "watch-a-doin"
 
