@@ -17,18 +17,21 @@ fun moreExpensiveSleep(stopwatch: Stopwatch) = stopwatch {
 
 class WatchadoinTest {
 
-    private lateinit var job : Job
-    private lateinit var scope : CoroutineScope
+    @Test
+    fun `Test 0 - API usage`() {
+        val stopwatch = Stopwatch("main")
 
-    @Before
-    fun setup() {
-        job = Job()
-        scope = CoroutineScope(job + Executors.newFixedThreadPool(1).asCoroutineDispatcher())
-    }
+        stopwatch {
+            expensiveSleep("expensiveOperation".watch)
 
-    @After
-    fun tearDown() {
-        job.cancel()
+            moreExpensiveSleep("moreExpensiveOperation".watch)
+        }
+
+        println(stopwatch.toStringPretty())
+
+        val svgFile = File("test0.svg")
+        stopwatch.saveAsSvg(svgFile)
+        println("SVG timeline report saved to file://${svgFile.absolutePath}")
     }
 
     @Test
@@ -37,11 +40,10 @@ class WatchadoinTest {
 
         loopWatch {
             for (i in 0 until 4) {
-                val iterationWatch = loopWatch["⏭️ iteration $i"]
-                iterationWatch {
-                    expensiveSleep(iterationWatch["🕰️"])
+                "⏭️ iteration $i".watch {
+                    expensiveSleep("🕰️".watch)
 
-                    moreExpensiveSleep(iterationWatch["🕰 x3"])
+                    moreExpensiveSleep("🕰 x3".watch)
                 }
             }
         }
@@ -54,19 +56,22 @@ class WatchadoinTest {
     }
 
     @Test
-    fun `Test 2 - Sleep On Coroutines`() = runBlocking{
+    fun `Test 2 - Sleep On Coroutines`() = runBlocking {
         val loopWatch = Stopwatch("🔁 loop")
+
+        val threadCount = 4
+        val job = Job()
+        val scope = CoroutineScope(job + Executors.newFixedThreadPool(threadCount).asCoroutineDispatcher())
 
         loopWatch {
             val jobs = mutableListOf<Job>()
 
             for (i in 0 until 4) {
                 jobs += scope.async {
-                    val iterationWatch = loopWatch["⏭️ iteration $i"]
-                    iterationWatch {
-                        expensiveSleep(iterationWatch["🕰️"])
+                    "⏭️ iteration $i".watch {
+                        expensiveSleep("🕰️".watch)
 
-                        moreExpensiveSleep(iterationWatch["🕰 x3"])
+                        moreExpensiveSleep("🕰 x3".watch)
                     }
                 }
             }
@@ -79,5 +84,7 @@ class WatchadoinTest {
         val svgFile = File("test2.svg")
         loopWatch.saveAsSvg(svgFile)
         println("SVG timeline report saved to file://${svgFile.absolutePath}")
+
+        job.cancel()
     }
 }

@@ -71,13 +71,9 @@ class SvgReport(val timelines: List<Timeline>) {
             val rowTimelines = rects[heightIndex] ?: ArrayList<Rect>().apply {
                 rects[heightIndex] = this
             }
-            println("adding ${timeline.name} to row $heightIndex")
             rowTimelines += rect
 
             timelinesSvg += rect.asSvgTimelineTag()
-        }
-        rects.forEach { (row, rects) ->
-            println("row $row -> ${rects.map { it.timeline.name }.joinToString(separator = ",")}")
         }
 
         val rowCount = rects.values.size

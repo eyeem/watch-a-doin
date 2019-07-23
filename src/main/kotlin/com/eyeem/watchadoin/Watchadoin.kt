@@ -60,7 +60,7 @@ class Stopwatch(val name: String) {
      * ```
      * @param block block of code to be measured
      */
-    inline operator fun <T> invoke(block: () -> T) : T {
+    inline operator fun <T> invoke(block: Stopwatch.() -> T) : T {
         start()
         val t = block()
         end()
@@ -111,11 +111,12 @@ class Stopwatch(val name: String) {
         children.forEach { it.timeout(false) }
     }
 
-    operator fun get(name: String) : Stopwatch {
-        val childStopwatch = Stopwatch(name)
-        children.add(childStopwatch)
-        return childStopwatch
-    }
+    val String.watch: Stopwatch
+        get() {
+            val childStopwatch = Stopwatch(this)
+            children.add(childStopwatch)
+            return childStopwatch
+        }
 
     /**
      * Produce a report for this [Stopwatch] and its children

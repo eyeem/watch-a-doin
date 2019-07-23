@@ -39,11 +39,10 @@ fun moreExpensiveOperation(stopwatch: Stopwatch) = stopwatch {
 
 loopWatch {
     for (i in 0 until 4) {
-        val iterationWatch = loopWatch["⏭️ iteration $i"]
-        iterationWatch {
-            expensiveOperation(iterationWatch["🕰️"])
+        "⏭️ iteration $i".watch {
+            expensiveOperation("🕰️".watch)
 
-            moreExpensiveOperation(iterationWatch["🕰 x3"])
+            moreExpensiveOperation("🕰 x3".watch)
         }
     }
 }
