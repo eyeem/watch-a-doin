@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.3.11"
+    id("kotlinx-serialization") version "1.3.11"
     maven
 }
 
@@ -14,14 +15,15 @@ repositories {
 }
 
 dependencies {
-    compile(kotlin("stdlib-jdk8"))
+    api(kotlin("stdlib-jdk8"))
+    api(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-runtime", version = "0.11.0")
 
-    testCompile("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.2.1")
-    testCompile("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.2.1")
-    testCompile("com.google.code.gson:gson:2.7")
+    testApi("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.2.1")
+    testApi("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.2.1")
+    testApi("com.google.code.gson:gson:2.7")
 
-    testCompile("junit", "junit", "4.12")
-    testCompile("org.amshove.kluent:kluent:1.34")
+    testApi("junit", "junit", "4.12")
+    testApi("org.amshove.kluent:kluent:1.34")
 }
 
 tasks.withType<KotlinCompile> {

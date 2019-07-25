@@ -1,5 +1,7 @@
 package com.eyeem.watchadoin
 
+import kotlinx.serialization.Serializable
+
 /**
  * Support for Trace Event Format
  *
@@ -9,8 +11,10 @@ package com.eyeem.watchadoin
  *
  * USAGE: open chrome and type `chrome://tracing` in the address bar
  */
+@Serializable
 data class TraceEventsReport(val traceEvents: List<TraceEvent>, val displayTimeUnit: String = "ns")
 
+@Serializable
 data class TraceEvent(val cat: String? = null, val pid: Int, val tid: Long, val id: Long? = null, val ts: Long, val dur: Long? = null, val ph: String, val name: String, val cname: String? = null)
 
 
