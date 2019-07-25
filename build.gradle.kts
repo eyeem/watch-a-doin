@@ -18,6 +18,7 @@ dependencies {
 
     testCompile("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.2.1")
     testCompile("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.2.1")
+    testCompile("com.google.code.gson:gson:2.7")
 
     testCompile("junit", "junit", "4.12")
     testCompile("org.amshove.kluent:kluent:1.34")

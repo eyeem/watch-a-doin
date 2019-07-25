@@ -1,11 +1,10 @@
 package com.eyeem.watchadoin
 
+import com.google.gson.Gson
 import kotlinx.coroutines.*
-import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import java.io.File
-import java.util.concurrent.Executors
 
 fun expensiveSleep(stopwatch: Stopwatch): Int = stopwatch {
     Thread.sleep(125)
@@ -50,11 +49,7 @@ class WatchadoinTest {
         }
         print(sum)
 
-        println(stopwatch.toStringPretty())
-
-        val svgFile = File("test0.svg")
-        stopwatch.saveAsSvg(svgFile)
-        println("SVG timeline report saved to file://${svgFile.absolutePath}")
+        stopwatch.asTestReport("test0")
     }
 
     @Test
@@ -65,17 +60,13 @@ class WatchadoinTest {
             for (i in 0 until 4) {
                 "⏭️ iteration $i".watch {
                     expensiveSleep("💤".watch)
-
                     moreExpensiveSleep("💤 x3".watch)
                 }
             }
         }
 
-        println(loopWatch.toStringPretty())
+        loopWatch.asTestReport("test1")
 
-        val svgFile = File("test1.svg")
-        loopWatch.saveAsSvg(svgFile)
-        println("SVG timeline report saved to file://${svgFile.absolutePath}")
     }
 
     @Test
@@ -98,11 +89,7 @@ class WatchadoinTest {
             jobs.forEach { it.join() }
         }
 
-        println(loopWatch.toStringPretty())
-
-        val svgFile = File("test2.svg")
-        loopWatch.saveAsSvg(svgFile)
-        println("SVG timeline report saved to file://${svgFile.absolutePath}")
+        loopWatch.asTestReport("test2")
     }
 
     @Test
@@ -123,12 +110,7 @@ class WatchadoinTest {
             }
         }
 
-        println(loopWatch.toStringPretty())
-
-        val svgFile = File("test3.svg")
-        loopWatch.saveAsSvg(svgFile)
-        println("SVG timeline report saved to file://${svgFile.absolutePath}")
-
+        loopWatch.asTestReport("test3")
     }
 
     @Test
@@ -149,12 +131,7 @@ class WatchadoinTest {
             }
         }
 
-        println(loopWatch.toStringPretty())
-
-        val svgFile = File("test4.svg")
-        loopWatch.saveAsSvg(svgFile)
-        println("SVG timeline report saved to file://${svgFile.absolutePath}")
-
+        loopWatch.asTestReport("test4")
     }
 
     @Test
@@ -177,12 +154,7 @@ class WatchadoinTest {
             }
         }
 
-        println(loopWatch.toStringPretty())
-
-        val svgFile = File("test5.svg")
-        loopWatch.saveAsSvg(svgFile)
-        println("SVG timeline report saved to file://${svgFile.absolutePath}")
-
+        loopWatch.asTestReport("test5")
     }
 
     @Test
@@ -203,12 +175,7 @@ class WatchadoinTest {
             }
         }
 
-        println(loopWatch.toStringPretty())
-
-        val svgFile = File("test6.svg")
-        loopWatch.saveAsSvg(svgFile)
-        println("SVG timeline report saved to file://${svgFile.absolutePath}")
-
+        loopWatch.asTestReport("test6")
     }
 
     @Test
@@ -229,11 +196,19 @@ class WatchadoinTest {
             }
         }
 
-        println(loopWatch.toStringPretty())
-
-        val svgFile = File("test7.svg")
-        loopWatch.saveAsSvg(svgFile)
-        println("SVG timeline report saved to file://${svgFile.absolutePath}")
-
+        loopWatch.asTestReport("test7")
     }
+}
+
+private fun Stopwatch.asTestReport(name: String) {
+    println(this.toStringPretty())
+
+    val svgFile = File("$name.svg")
+    this.saveAsSvg(svgFile)
+    println("SVG timeline report saved to file://${svgFile.absolutePath}")
+
+    val traceJson = Gson().toJson(this.asTraceEventsReport())
+    val traceJsonFile = File("$name.json")
+    traceJsonFile.printWriter().use { it.write(traceJson) }
+    println("Trace event report file://${traceJsonFile.absolutePath}")
 }
