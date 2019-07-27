@@ -9,32 +9,38 @@ import kotlin.math.roundToLong
  *
  * @param timelines output of [Stopwatch.report]
  */
-class SvgReport(val timelines: List<Timeline>) {
+class SvgReport(val timelines: List<Timeline>, timeaxisPlaceholder: Boolean = false) {
 
-    private val padding = 10
+    val padding = 10
     private val timelineHeight = 30
     private val fontSize = 12
     private val smallFontSize = 8
-    private val xAxisHeight = 8
-    private val scaleGridDistance = 50
+    val xAxisHeight = 8
+    val scaleGridDistance = 50
 
     private val maxPageWidth = 1200
+    private val renderedSvg : String
 
+    private val svgWidth : Long
+    val svgHeight : Long
+    var xScale : Float
+        private set
+    val totalDurationMs : Long
 
-    /**
-     * @return SVG formatted string with the report in it
-     */
-    override fun toString(): String {
-        var xScale = 1.0f
-        val scaleLength = timelines.map { it.duration + it.relativeStart }.maxBy { it }
+    val svgWidthNormalized
+        get() = svgWidth * xScale
+
+    init {
+        xScale = 1.0f
+        totalDurationMs = timelines.map { it.duration + it.relativeStart }.maxBy { it }
             ?: throw IllegalStateException("no maximum found")
-        val scaleSteps = scaleLength / scaleGridDistance
-        val svgWidth = scaleLength + padding * 2
-        if (svgWidth > maxPageWidth) {
-            xScale = maxPageWidth.toFloat() / svgWidth.toFloat()
+        val scaleSteps = totalDurationMs / scaleGridDistance
+        svgWidth = totalDurationMs + padding * 2
+        if (svgWidth > (maxPageWidth - padding * 2)) {
+            xScale = maxPageWidth.toFloat() / totalDurationMs.toFloat()
         }
 
-        var timelinesSvg: String = "" // timelines as svg tags
+        var timelinesSvg = "" // timelines as svg tags
 
         // collects timelines as we draw them, int here is a raw in which we draw timeline
         val rects = HashMap<Int, ArrayList<Rect>>()
@@ -44,7 +50,7 @@ class SvgReport(val timelines: List<Timeline>) {
 
             val _y1 = (heightIndex + 1) * padding + heightIndex * timelineHeight
             val _y1Text = (_y1 + (timelineHeight - fontSize)).toLong()
-            val _x1 = ((timeline.relativeStart + padding) * xScale).toLong()
+            val _x1 = padding + (timeline.relativeStart * xScale).toLong()
             val _rectWidth = (timeline.duration * xScale).toLong()
             val _rectHeight = timelineHeight.toLong()
 
@@ -77,44 +83,58 @@ class SvgReport(val timelines: List<Timeline>) {
         }
 
         val rowCount = rects.values.size
-        val svgHeight = (rowCount + 1) * padding + rowCount * timelineHeight + xAxisHeight + padding
+        svgHeight = ((rowCount + 1) * padding + rowCount * timelineHeight + xAxisHeight + padding).toLong()
 
-        var output = """<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth * xScale}" height="$svgHeight">"""
+        var output = """<svg id="stopwatch" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 $svgWidthNormalized $svgHeight" width="$svgWidthNormalized" height="$svgHeight">"""
 
         // draw the timeline grid and axis
-        val omit = (1f / xScale).roundToLong()
+        if (timeaxisPlaceholder) {
+            output += """<g id="timeaxis"></g>"""
+        } else {
+            val omit = (1f / xScale).roundToLong()
 
-        for (scaleStep in 0..scaleSteps) {
+            for (scaleStep in 0..scaleSteps) {
 
-            if (scaleStep % omit != 0L) {
-                continue
-            }
+                if (scaleStep % omit != 0L) {
+                    continue
+                }
 
-            var x = scaleGridDistance * scaleStep + padding
-            x = (x * xScale).toLong()
-            val y1 = padding
-            val yLength = (rowCount - 1) * padding + rowCount * timelineHeight
+                val x = (scaleGridDistance * scaleStep * xScale).toLong() + padding
+                val y1 = padding
+                val yLength = (rowCount - 1) * padding + rowCount * timelineHeight
 
 
-            output += """<g>
+                output += """<g>
                             <line stroke-dasharray="5, 5" x1="$x" y1="$y1" x2="$x" y2="${y1 + yLength}" style="stroke-width:1;stroke:rgba(0,0,0,0.5)"/>
                             <text x="$x" y="${y1 + yLength + padding}" font-family="Verdana" font-size="$xAxisHeight" fill="#00000077">${scaleStep * scaleGridDistance}ms</text>
                          </g>""".trimIndent()
+            }
         }
 
         output += timelinesSvg
 
         output += "</svg>"
-        return output
+        renderedSvg = output
     }
 
+
+    /**
+     * @return SVG formatted string with the report in it
+     */
+    override fun toString(): String = renderedSvg
 }
 
-fun Stopwatch.asSvgReport(): SvgReport = SvgReport(timelines(includeParent = true))
+fun Stopwatch.asSvgReport(timeaxisPlaceholder: Boolean = false): SvgReport = SvgReport(timelines(includeParent = true), timeaxisPlaceholder)
 
 fun Stopwatch.saveAsSvg(file: File) {
     val svgOutput = asSvgReport().toString()
     file.printWriter().use { out -> out.println(svgOutput) }
+}
+
+fun Stopwatch.saveAsHtml(file: File) {
+    val svgReport = asSvgReport(timeaxisPlaceholder = true)
+    val htmlOutput = htmlTemplate(report = svgReport)
+    file.printWriter().use { out -> out.println(htmlOutput) }
 }
 
 private data class Rect(
@@ -144,7 +164,7 @@ private fun Rect.asSvgTimelineTag() =
          <text x="${x1 + padding}" y="$y1Text" font-family="Verdana" font-size="$fontSize" fill="#000000" clip-path="url(#clip$clipIndex)">${timeline.name}</text>
          <text x="${x1 + padding}" y="${y1Text+fontSize * 0.8}" font-family="Verdana" font-size="$smallFontSize" fill="#000000" clip-path="url(#clip$clipIndex)">tid=${timeline.tid}</text>
          <clipPath id="clip$clipIndex">
-           <rect x="$x1" y="$y1" width="$width" height="$height"/>
+           <rect x="$x1" y="$y1" width="$width" height="$height" class="clipRect"/>
          </clipPath>
        </g>""".trimIndent()
 
@@ -181,7 +201,6 @@ private fun HashMap<Int, ArrayList<Rect>>.findParentRect(timeline: Timeline): Re
 }
 
 private fun List<Rect>?.isColliding(timeline: Timeline) : Boolean {
-
     if (this == null)
         return false
 
@@ -194,21 +213,144 @@ private fun List<Rect>?.isColliding(timeline: Timeline) : Boolean {
 }
 
 private fun HashMap<Int, ArrayList<Rect>>.firstAvailableRow(timeline: Timeline): Int {
-
-
-
     val parentRect = findParentRect(timeline)
-
     var currentRow = parentRect?.rowIndex?.let { it + 1 } ?: 0
 
-
-
     while (true) {
-
         if (!this[currentRow].isColliding(timeline)) {
             return currentRow
         }
-
         currentRow++
     }
 }
+
+private fun htmlTemplate(report: SvgReport) = """
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+  <title>Watcha Doin?</title>
+
+  <style i type="text/css">
+    svg * {
+      -webkit-user-select: none; /* Safari 3.1+ */
+        -moz-user-select: none; /* Firefox 2+ */
+        -ms-user-select: none; /* IE 10+ */
+        user-select: none; /* Standard syntax */
+    }
+
+    svg text {
+      fill: #000;
+      font-family: "Verdana";
+    }
+
+  </style>
+
+  <script src="https://code.easypz.io/easypz.latest.min.js"></script>
+
+</head>
+<body>
+
+$report
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.7.1/svg.min.js"></script>
+<script type="text/javascript">
+    var svg = document.getElementById('stopwatch')
+    var stopwatch = SVG.get('stopwatch')
+    var timeaxis = SVG.adopt(svg.getElementById('timeaxis'))
+    var groups = Array.from(svg.getElementsByTagName('g'))
+    var width = ${report.svgWidthNormalized}
+    var height = ${report.svgHeight}
+    var padding = ${report.padding}
+    var xScale = ${report.xScale}
+    var totalDurationMs = ${report.totalDurationMs}
+    var xAxisHeight = ${report.xAxisHeight}
+
+    var lastScale
+    function drawTimeAxis(scale) {
+      if (lastScale === scale) {
+      	return
+      }
+      lastScale = scale
+      timeaxis.clear()
+      var scaleGridDistance = 50
+      var omitNotRounded = 1.0 / xScale / scale
+      var omit = Math.round(omitNotRounded)
+
+      // when omit is under 0.5 we must set it to 1 but decrease scale grid distance
+      if (omitNotRounded < 0.5) {
+      	omit = 1.0
+      	if (omitNotRounded < 0.25) {
+      		scaleGridDistance = 10
+      	} else {
+      		scaleGridDistance = 25
+      	}
+      }
+
+      var scaleSteps = totalDurationMs / scaleGridDistance
+
+      var scaleStep;
+      for (scaleStep = 0; scaleStep < scaleSteps; scaleStep++) { 
+        if (scaleStep % omit != 0) {
+        	continue
+        }
+
+        var x = ((scaleGridDistance * scaleStep * xScale) + padding) * scale
+        var y1 = padding
+        var y2 = height - padding - xAxisHeight
+        timeaxis.line(x, y1, x, y2).stroke({ width: 1, color: '#0000007f', dasharray: '5, 5'})
+
+        var timeMs = scaleStep * scaleGridDistance
+        timeaxis.text(timeMs + "ms").attr({"font-family": "Verdana", "font-size": xAxisHeight, "x": x, "y": y2 - padding})
+      }
+    }
+
+    drawTimeAxis(1.0)
+
+    var maxScale = Math.max(1.0, Math.round((totalDurationMs/width)*12))
+
+    new EasyPZ(svg, function(transform) {
+
+      drawTimeAxis(transform.scale)
+
+      // Use transform.scale, transform.translateX, transform.translateY to update your visualization
+      stopwatch.viewbox(-transform.translateX, 0, width, height)
+      groups.forEach(function(group) {
+      	if(group.getAttribute('id') === "timeaxis") {
+      		return
+      	}
+        group.setAttribute("transform", "scale(" + transform.scale + " 1)");
+
+        var rects = Array.from(group.getElementsByTagName('rect'))
+
+        var firstRect = rects[0]
+        if (firstRect === undefined) {
+          return;
+        }
+
+        var x = firstRect.getAttribute('x') * 1
+        var blockWidth = firstRect.getAttribute('width') * 1
+
+        var markingRect = rects[1]
+        if (markingRect === undefined) {
+          return;
+        }
+
+        markingRect.setAttribute("transform", "scale(" + 1/transform.scale +" 1)");
+        markingRect.setAttribute("x", (x + blockWidth) * transform.scale - 1);
+
+        var clipRect = Array.from(group.getElementsByClassName('clipRect'))[0]
+        clipRect.setAttribute("transform", "scale(" + transform.scale +" 1)");
+
+        var texts = Array.from(group.getElementsByTagName('text'))
+        texts.forEach(function(text) {
+            text.setAttribute("transform", "scale(" + 1/transform.scale +" 1)");
+            text.setAttribute("x", x * transform.scale + 10);
+        });
+      })
+    },
+    { minScale: 0.5, maxScale: maxScale, bounds: { top: 0, right: 0, bottom: 0, left: 0 } }, ["FLICK_PAN", "WHEEL_ZOOM", "PINCH_ZOOM", "DBLCLICK_ZOOM_IN", "DBLRIGHTCLICK_ZOOM_OUT"]);
+
+</script>
+
+</body></html>
+""".trimIndent()

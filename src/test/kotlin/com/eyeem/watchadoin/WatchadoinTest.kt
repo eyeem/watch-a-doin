@@ -80,7 +80,6 @@ class WatchadoinTest {
                 jobs += GlobalScope.async {
                     "⏭️ iteration $i".watch {
                         expensiveSleep("💤".watch)
-
                         moreExpensiveSleep("💤 x3".watch)
                     }
                 }
@@ -102,7 +101,6 @@ class WatchadoinTest {
                     launch {
                         "⏭️ iteration $i".watch {
                             expensiveSleep("💤".watch)
-
                             moreExpensiveSleep("💤 x3".watch)
                         }
                     }
@@ -123,7 +121,6 @@ class WatchadoinTest {
                     launch {
                         "⏭️ iteration $i".watch {
                             expensiveDelay("🕰".watch)
-
                             moreExpensiveDelay("🕰️ x3".watch)
                         }
                     }
@@ -146,7 +143,6 @@ class WatchadoinTest {
                     launch {
                         "⏭️ iteration $i".watch {
                             expensiveDelay("🕰".watch)
-
                             moreExpensiveDelay("🕰️ x3".watch)
                         }
                     }
@@ -206,6 +202,10 @@ private fun Stopwatch.asTestReport(name: String) {
     val svgFile = File("$name.svg")
     this.saveAsSvg(svgFile)
     println("SVG timeline report saved to file://${svgFile.absolutePath}")
+
+    val htmlFile = File("$name.html")
+    this.saveAsHtml(htmlFile)
+    println("HTML timeline report saved to file://${htmlFile.absolutePath}")
 
     val traceJson = Gson().toJson(this.asTraceEventsReport())
     val traceJsonFile = File("$name.json")
