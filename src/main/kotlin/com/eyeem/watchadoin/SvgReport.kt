@@ -169,7 +169,7 @@ private fun Rect.asSvgTimelineTag() =
     """<g>
          <rect x="$x1" y="$y1" width="$width" height="$height" style="fill:rgba($fillColor,$alpha);"></rect>
          <rect x="${x2 - 1}" y="$y1" width="2" height="$height" style="fill:rgba(0,0,0,1);"></rect>
-         <text x="${x1 + padding}" y="$y1Text" font-family="Verdana" font-size="$fontSize" fill="#000000" clip-path="url(#clip$clipIndex)">${timeline.name}</text>
+         <text x="${x1 + padding}" y="$y1Text" font-family="Verdana" font-size="$fontSize" fill="#000000" clip-path="url(#clip$clipIndex)">${timeline.name.escapeXml()}</text>
          <text x="${x1 + padding}" y="${y1Text+fontSize * 0.8}" font-family="Verdana" font-size="$smallFontSize" fill="#000000" clip-path="url(#clip$clipIndex)">tid=${timeline.tid}</text>
          <clipPath id="clip$clipIndex">
            <rect x="$x1" y="$y1" width="$width" height="$height" class="clipRect"/>
@@ -230,6 +230,23 @@ private fun HashMap<Int, ArrayList<Rect>>.firstAvailableRow(timeline: Timeline):
         }
         currentRow++
     }
+}
+
+internal val xmlEscapeMap = mapOf(
+    '"' to "&quot;",
+    '\'' to "&apos;",
+    '<' to "&lt;",
+    '>' to "&gt;",
+    '&' to "&amp;"
+)
+internal fun String.escapeXml() : String {
+    val sb = StringBuilder()
+
+    forEach { char ->
+        sb.append(xmlEscapeMap[char] ?: char)
+    }
+
+    return sb.toString()
 }
 
 private fun htmlTemplate(report: SvgReport) = """
