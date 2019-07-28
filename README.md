@@ -49,7 +49,8 @@ loopWatch {
 
 println(loopWatch.toStringPretty())
 
-loopWatch.saveAs(File("loopWatch.svg"))
+loopWatch.saveAsSvg(File("loopWatch.svg"))
+loopWatch.saveAsHtml(File("loopWatch.html")) // interactive svg with pan and zoom
 
 ```
 
