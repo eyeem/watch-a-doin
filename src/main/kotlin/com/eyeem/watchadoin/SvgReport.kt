@@ -126,15 +126,23 @@ class SvgReport(val timelines: List<Timeline>, timeaxisPlaceholder: Boolean = fa
 
 fun Stopwatch.asSvgReport(timeaxisPlaceholder: Boolean = false): SvgReport = SvgReport(timelines(includeParent = true), timeaxisPlaceholder)
 
-fun Stopwatch.saveAsSvg(file: File) {
+fun Stopwatch.saveAsSvg(file: File, dryRun: Boolean = false) {
     val svgOutput = asSvgReport().toString()
-    file.printWriter().use { out -> out.println(svgOutput) }
+    if (dryRun) {
+        println(svgOutput)
+    } else {
+        file.printWriter().use { out -> out.println(svgOutput) }
+    }
 }
 
-fun Stopwatch.saveAsHtml(file: File) {
+fun Stopwatch.saveAsHtml(file: File, dryRun: Boolean = false) {
     val svgReport = asSvgReport(timeaxisPlaceholder = true)
     val htmlOutput = htmlTemplate(report = svgReport)
-    file.printWriter().use { out -> out.println(htmlOutput) }
+    if (dryRun) {
+        println(svgReport)
+    } else {
+        file.printWriter().use { out -> out.println(htmlOutput) }
+    }
 }
 
 private data class Rect(

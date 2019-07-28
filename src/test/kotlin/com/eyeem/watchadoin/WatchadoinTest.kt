@@ -28,6 +28,8 @@ suspend fun moreExpensiveDelay(stopwatch: Stopwatch): Int = stopwatch {
 
 class WatchadoinTest {
 
+    val dryRun = true
+
     @Before
     fun warmUp() {
         runBlocking {
@@ -49,7 +51,7 @@ class WatchadoinTest {
         }
         print(sum)
 
-        stopwatch.asTestReport("test0")
+        stopwatch.asTestReport("test0", dryRun)
     }
 
     @Test
@@ -65,7 +67,7 @@ class WatchadoinTest {
             }
         }
 
-        loopWatch.asTestReport("test1")
+        loopWatch.asTestReport("test1", dryRun)
 
     }
 
@@ -88,7 +90,7 @@ class WatchadoinTest {
             jobs.forEach { it.join() }
         }
 
-        loopWatch.asTestReport("test2")
+        loopWatch.asTestReport("test2", dryRun)
     }
 
     @Test
@@ -108,7 +110,7 @@ class WatchadoinTest {
             }
         }
 
-        loopWatch.asTestReport("test3")
+        loopWatch.asTestReport("test3", dryRun)
     }
 
     @Test
@@ -128,7 +130,7 @@ class WatchadoinTest {
             }
         }
 
-        loopWatch.asTestReport("test4")
+        loopWatch.asTestReport("test4", dryRun)
     }
 
     @Test
@@ -150,7 +152,7 @@ class WatchadoinTest {
             }
         }
 
-        loopWatch.asTestReport("test5")
+        loopWatch.asTestReport("test5", dryRun)
     }
 
     @Test
@@ -171,7 +173,7 @@ class WatchadoinTest {
             }
         }
 
-        loopWatch.asTestReport("test6")
+        loopWatch.asTestReport("test6", dryRun)
     }
 
     @Test
@@ -192,19 +194,19 @@ class WatchadoinTest {
             }
         }
 
-        loopWatch.asTestReport("test7")
+        loopWatch.asTestReport("test7", dryRun)
     }
 }
 
-private fun Stopwatch.asTestReport(name: String) {
+private fun Stopwatch.asTestReport(name: String, dryRun: Boolean) {
     println(this.toStringPretty())
 
     val svgFile = File("$name.svg")
-    this.saveAsSvg(svgFile)
+    this.saveAsSvg(svgFile, dryRun)
     println("SVG timeline report saved to file://${svgFile.absolutePath}")
 
     val htmlFile = File("$name.html")
-    this.saveAsHtml(htmlFile)
+    this.saveAsHtml(htmlFile, dryRun)
     println("HTML timeline report saved to file://${htmlFile.absolutePath}")
 
     val traceJson = Gson().toJson(this.asTraceEventsReport())
