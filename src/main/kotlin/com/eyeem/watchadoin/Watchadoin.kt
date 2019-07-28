@@ -112,11 +112,13 @@ class Stopwatch(val name: String) {
     }
 
     val String.watch: Stopwatch
-        get() {
-            val childStopwatch = Stopwatch(this)
-            children.add(childStopwatch)
-            return childStopwatch
-        }
+        get() = createChild(this)
+
+    private fun createChild(name: String) : Stopwatch {
+        val childStopwatch = Stopwatch(name)
+        children.add(childStopwatch)
+        return childStopwatch
+    }
 
     /**
      * Produce a report for this [Stopwatch] and its children
@@ -145,6 +147,41 @@ class Stopwatch(val name: String) {
     }
 
     fun toStringPretty() : String = timelines().joinToString(separator = "\n") { it.report() }
+
+    companion object {
+        /**
+         * TL;DR: You should avoid using this method. There might be use cases when you need it.
+         *
+         * Stopwatch “forces” creating children within the parent’s context by design - otherwise at some
+         * point it is getting confusing who is the owner of the child. Nesting scopes makes code readable
+         * and easier to follow
+         *
+         * Nonetheless, there might be cases where creating a watch outside of a scope might be
+         * desirable, e.g. imagine using Stopwatch with Android's Activity lifecycle.
+         *
+         * ```kotlin
+         * class MyActivty : Activity {
+         *   lateinit activityWatch : Stopwatch
+         *   fun onCreate() {
+         *     activityWatch = Stopwatch("activity")
+         *     activityWatch.start()
+         *   }
+         *
+         *   fun onClickSomething() {
+         *     val clickWatch = Stopwatch.bastard(activityWatch, "clickWatch")
+         *     clickWatch {
+         *       // some operation
+         *     }
+         *   }
+         *
+         *   fun onDestroy() {
+         *     activityWatch.stop()
+         *   }
+         * }
+         * ```
+         */
+        fun bastard(parent: Stopwatch, name: String) : Stopwatch = parent.createChild(name)
+    }
 }
 
 /**
