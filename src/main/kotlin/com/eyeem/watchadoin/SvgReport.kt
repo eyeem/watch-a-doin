@@ -19,6 +19,9 @@ class SvgReport(val timelines: List<Timeline>, htmlEmbed: Boolean = false) {
     val timelineAxisHeight = 12
     val scaleGridDistance = 50
     val relations = timelines.relations()
+    val ancestors = timelines.map { timeline ->
+        timeline.ancestors().map { ancestorTimeline -> timelines.indexOf(ancestorTimeline) }
+    }
 
     private val maxPageWidth = 1200
     private val renderedSvg : String
@@ -346,18 +349,19 @@ $report
     var xAxisHeight = ${report.xAxisHeight}
     var timelineAxisHeight = ${report.timelineAxisHeight}
 
-    function d(name, tid, time, relations) {
+    function d(name, tid, time, relations, ancestors) {
     	var d = {}
     	d["name"] = name
     	d["tid"] = tid
     	d["time"] = time
         d["relations"] = relations
+        d["ancestors"] = ancestors
     	return d
     }
 
     var data = [
       ${report.timelines.mapIndexed { index, timeline ->
-    """d("${timeline.name.escapeXml()}", ${timeline.tid}, ${timeline.duration}, ${report.relations[index].joinToString(separator = ",", prefix = "[", postfix = "]")})"""
+    """d("${timeline.name.escapeXml()}", ${timeline.tid}, ${timeline.duration}, ${report.relations[index].joinToString(separator = ",", prefix = "[", postfix = "]")}, ${report.ancestors[index].joinToString(separator = ",", prefix = "[", postfix = "]")})"""
         }.joinToString(separator = ",\n")
       }
     ]
