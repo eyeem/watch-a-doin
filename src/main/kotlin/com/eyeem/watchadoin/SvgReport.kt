@@ -388,6 +388,7 @@ $report
           timebox.style.display = "none"
         }
       }
+      onDefaultHint()
     }
 
     function onTimeBoxHover(index) {
@@ -396,7 +397,17 @@ $report
     }
 
     function onDefaultHint() {
-    	navHint.innerText = defaultHint
+        if (selectedIndex === -1) {
+    	    navHint.innerText = defaultHint
+        } else {
+            var d = data[selectedIndex]
+            var subTree = d.ancestors.map(it => data[it].name).join(' ▷ ')
+            var ancestorCount = d.relations.length - d.ancestors.length
+            if (ancestorCount > 0) {
+              subTree += " (+" + ancestorCount + " ancestors)"
+            }
+            navHint.innerText = subTree + " | " + d.time + "ms | tid = " + d.tid
+        }
     }
 
     var lastScale
