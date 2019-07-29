@@ -18,6 +18,7 @@ class SvgReport(val timelines: List<Timeline>, htmlEmbed: Boolean = false) {
     val xAxisHeight = 8
     val timelineAxisHeight = 10
     val scaleGridDistance = 50
+    val relations = timelines.relations()
 
     private val maxPageWidth = 1200
     private val renderedSvg : String
@@ -177,7 +178,7 @@ private fun Rect.asSvgTimelineTag(htmlEmbed: Boolean, timelineIndex: Int) : Stri
         return """ onclick="onTimeBoxClick('$timelineIndex')" onmouseover="onTimeBoxHover('$timelineIndex')" onmouseout="onDefaultHint()""""
     }
 
-    return """<g>
+    return """<g id="timebox_$timelineIndex">
          <rect x="$x1" y="$y1" width="$width" height="$height" style="fill:rgba($fillColor,$alpha);"${listeners()}></rect>
          <rect x="${x2 - 1}" y="$y1" width="2" height="$height" style="fill:rgba(0,0,0,1);"${listeners()}></rect>
          <text x="${x1 + padding}" y="$y1Text" font-family="Verdana" font-size="$fontSize" fill="#000000" clip-path="url(#clip$clipIndex)"${listeners()}>${timeline.name.escapeXml()}</text>
@@ -188,6 +189,25 @@ private fun Rect.asSvgTimelineTag(htmlEmbed: Boolean, timelineIndex: Int) : Stri
        </g>""".trimIndent()
 }
 
+private fun List<Timeline>.relations(list : ArrayList<Timeline> = ArrayList()) : List<HashSet<Int>> {
+    val ancestorsArray = map { it.ancestors() }
+    val relations = ArrayList<HashSet<Timeline>>()
+    forEachIndexed { index, timeline ->
+        relations += HashSet<Timeline>()
+        ancestorsArray.forEach { ancestors ->
+            if (ancestors.contains(timeline)) {
+                relations[index].addAll(ancestors)
+            }
+        }
+    }
+    return relations.map { relationSet -> HashSet(relationSet.map { timeline -> indexOf(timeline) }) }
+}
+
+private fun Timeline.ancestors(list : ArrayList<Timeline> = ArrayList()) : List<Timeline> {
+    list.add(0, this)
+    parent?.ancestors(list)
+    return list
+}
 
 private fun Long.between(lower: Long, upper: Long): Boolean = this > lower && this < upper
 
@@ -326,24 +346,45 @@ $report
     var xAxisHeight = ${report.xAxisHeight}
     var timelineAxisHeight = ${report.timelineAxisHeight}
 
-    function d(name, tid, time) {
+    function d(name, tid, time, relations) {
     	var d = {}
     	d["name"] = name
     	d["tid"] = tid
     	d["time"] = time
+        d["relations"] = relations
     	return d
-    }
-
-    function onTimeBoxClick(index) {
-    	// TODO something great
     }
 
     var data = [
       ${report.timelines.mapIndexed { index, timeline ->
-    """d("${timeline.name}", ${timeline.tid}, ${timeline.duration})"""
+    """d("${timeline.name.escapeXml()}", ${timeline.tid}, ${timeline.duration}, ${report.relations[index].joinToString(separator = ",", prefix = "[", postfix = "]")})"""
         }.joinToString(separator = ",\n")
       }
     ]
+
+    var selectedIndex = -1
+    function onTimeBoxClick(index) {
+    	if (new Date().getTime() - lastTransformationAt < 300) {
+        return // debounce
+      }
+
+      if (selectedIndex === index) {
+        selectedIndex = -1
+      } else {
+        selectedIndex = index
+      }
+      var relations = data[index].relations
+
+      var index
+      for (i = 0; i < data.length; i++) {
+        var timebox = document.getElementById('timebox_'+i)
+        if (selectedIndex === -1 || relations.indexOf(i) > -1) {
+          timebox.style.display = "block"
+        } else {
+          timebox.style.display = "none"
+        }
+      }
+    }
 
     function onTimeBoxHover(index) {
     	var d = data[index]
@@ -400,7 +441,15 @@ $report
 
     var maxScale = Math.max(1.0, Math.round((totalDurationMs/width)*12))
 
+    var lastTransformationAt = new Date().getTime()
+    var lastX
+
     new EasyPZ(svg, function(transform) {
+
+      if (lastScale !== transform.scale || lastX !== transform.translateX) {
+      	 lastTransformationAt = new Date().getTime()
+      }
+      lastX = transform.translateX
 
       drawTimeAxis(transform.scale)
 
