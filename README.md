@@ -77,7 +77,7 @@ and create the following SVG:
 
 ### Timeouts
 
-Some stopwatches might finish after others, consider using launch. Some might never finish.
+Some stopwatches might finish after others, some might never finish. Consider following example using `launch`.
 
 ```kotlin
 val baseWatch = Stopwatch("runBlocking")
