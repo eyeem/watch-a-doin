@@ -16,7 +16,7 @@ class SvgReport(val timelines: List<Timeline>, htmlEmbed: Boolean = false) {
     private val fontSize = 12
     private val smallFontSize = 8
     val xAxisHeight = 8
-    val timelineAxisHeight = 10
+    val timelineAxisHeight = 12
     val scaleGridDistance = 50
     val relations = timelines.relations()
 
@@ -316,7 +316,7 @@ private fun htmlTemplate(report: SvgReport) = """
 <body>
 
   <div class="sticky">
-    <div id="navHint" style="font-size: 10px; color: #777; padding-left: 10px; height: 10px;">Zoom In [Hold Left Click] | Zoom Out [Double Left Click]</div>
+    <div id="navHint" style="font-size: 10px; color: #777; padding-left: 10px; height: 15px;">Zoom In [Hold Left Click] | Zoom Out [Double Left Click]</div>
     <div>
     <svg id="navSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${report.svgWidthNormalized} ${report.timelineAxisHeight}" width="${report.svgWidthNormalized}" height="${report.timelineAxisHeight}">
       <g id="timeaxis"></g>
@@ -388,7 +388,7 @@ $report
 
     function onTimeBoxHover(index) {
     	var d = data[index]
-    	navHint.innerText = "tid = " + d.tid + " | " + d.time + "ms | " + d.name
+    	navHint.innerText = d.name + " | " + d.time + "ms | tid = " + d.tid
     }
 
     function onDefaultHint() {
