@@ -16,6 +16,7 @@ class SvgReport(val timelines: List<Timeline>, timeaxisPlaceholder: Boolean = fa
     private val fontSize = 12
     private val smallFontSize = 8
     val xAxisHeight = 8
+    val timelineAxisHeight = 10
     val scaleGridDistance = 50
 
     private val maxPageWidth = 1200
@@ -29,6 +30,9 @@ class SvgReport(val timelines: List<Timeline>, timeaxisPlaceholder: Boolean = fa
 
     val svgWidthNormalized
         get() = svgWidth * xScale
+
+    val title: String
+        get() = timelines.firstOrNull()?.name ?: "Empty Report"
 
     init {
         xScale = 1.0f
@@ -253,7 +257,7 @@ private fun htmlTemplate(report: SvgReport) = """
 <!DOCTYPE html>
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
-  <title>Watcha Doin?</title>
+  <title>${report.title.escapeXml()}</title>
 
   <style i type="text/css">
     svg * {
@@ -268,12 +272,29 @@ private fun htmlTemplate(report: SvgReport) = """
       font-family: "Verdana";
     }
 
+    div.sticky {
+      font-family: "Verdana";
+      position: -webkit-sticky;
+      position: sticky;
+      top: 0;
+      background-color: #fff;
+    }
+
   </style>
 
   <script src="https://code.easypz.io/easypz.latest.min.js"></script>
 
 </head>
 <body>
+
+  <div class="sticky">
+    <div style="font-size: 10px; color: #777; padding-left: 10px">Zoom In [Hold Left Click] | Zoom Out [Double Left Click]</div>
+    <div>
+    <svg id="navSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${report.svgWidthNormalized} ${report.timelineAxisHeight}" width="${report.svgWidthNormalized}" height="${report.timelineAxisHeight}">
+      <g id="timeaxis"></g>
+    </svg>
+    </div>
+  </div>
 
 $report
 
@@ -282,6 +303,11 @@ $report
     var svg = document.getElementById('stopwatch')
     var stopwatch = SVG.get('stopwatch')
     var timeaxis = SVG.adopt(svg.getElementById('timeaxis'))
+
+    var navSvgElement = document.getElementById('navSvg')
+    var navSvg = SVG.get('navSvg')
+    var navTimeaxis = SVG.adopt(navSvgElement.getElementById('timeaxis'))
+
     var groups = Array.from(svg.getElementsByTagName('g'))
     var width = ${report.svgWidthNormalized}
     var height = ${report.svgHeight}
@@ -289,6 +315,7 @@ $report
     var xScale = ${report.xScale}
     var totalDurationMs = ${report.totalDurationMs}
     var xAxisHeight = ${report.xAxisHeight}
+    var timelineAxisHeight = ${report.timelineAxisHeight}
 
     var lastScale
     function drawTimeAxis(scale) {
@@ -297,6 +324,7 @@ $report
       }
       lastScale = scale
       timeaxis.clear()
+      navTimeaxis.clear()
       var scaleGridDistance = 50
       var omitNotRounded = 1.0 / xScale / scale
       var omit = Math.round(omitNotRounded)
@@ -326,6 +354,7 @@ $report
 
         var timeMs = scaleStep * scaleGridDistance
         timeaxis.text(timeMs + "ms").attr({"font-family": "Verdana", "font-size": xAxisHeight, "x": x, "y": y2 - padding})
+        navTimeaxis.text(timeMs + "ms").attr({"font-family": "Verdana", "font-size": xAxisHeight, "x": x, "y": 0})
       }
     }
 
@@ -339,6 +368,7 @@ $report
 
       // Use transform.scale, transform.translateX, transform.translateY to update your visualization
       stopwatch.viewbox(-transform.translateX, 0, width, height)
+      navSvg.viewbox(-transform.translateX, 0, width, timelineAxisHeight)
       groups.forEach(function(group) {
       	if(group.getAttribute('id') === "timeaxis") {
       		return
@@ -373,7 +403,7 @@ $report
         });
       })
     },
-    { minScale: 0.5, maxScale: maxScale, bounds: { top: 0, right: 0, bottom: 0, left: 0 } }, ["FLICK_PAN", "WHEEL_ZOOM", "PINCH_ZOOM", "DBLCLICK_ZOOM_IN", "DBLRIGHTCLICK_ZOOM_OUT"]);
+    { minScale: 0.5, maxScale: maxScale, bounds: { top: 0, right: 0, bottom: 0, left: 0 } }, ["FLICK_PAN", "HOLD_ZOOM_IN", "DBLCLICK_ZOOM_OUT"]);
 
 </script>
 

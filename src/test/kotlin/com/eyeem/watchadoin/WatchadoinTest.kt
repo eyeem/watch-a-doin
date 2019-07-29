@@ -28,7 +28,7 @@ suspend fun moreExpensiveDelay(stopwatch: Stopwatch): Int = stopwatch {
 
 class WatchadoinTest {
 
-    val dryRun = false
+    val dryRun = true
 
     @Before
     fun warmUp() {
