@@ -9,7 +9,7 @@ import kotlin.math.roundToLong
  *
  * @param timelines output of [Stopwatch.report]
  */
-class SvgReport(val timelines: List<Timeline>, timeaxisPlaceholder: Boolean = false) {
+class SvgReport(val timelines: List<Timeline>, htmlEmbed: Boolean = false) {
 
     val padding = 10
     private val timelineHeight = 30
@@ -83,7 +83,7 @@ class SvgReport(val timelines: List<Timeline>, timeaxisPlaceholder: Boolean = fa
             }
             rowTimelines += rect
 
-            timelinesSvg += rect.asSvgTimelineTag()
+            timelinesSvg += rect.asSvgTimelineTag(htmlEmbed, index)
         }
 
         val rowCount = rects.values.size
@@ -92,7 +92,7 @@ class SvgReport(val timelines: List<Timeline>, timeaxisPlaceholder: Boolean = fa
         var output = """<svg id="stopwatch" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 $svgWidthNormalized $svgHeight" width="$svgWidthNormalized" height="$svgHeight">"""
 
         // draw the timeline grid and axis
-        if (timeaxisPlaceholder) {
+        if (htmlEmbed) {
             output += """<g id="timeaxis"></g>"""
         } else {
             val omit = (1f / xScale).roundToLong()
@@ -169,16 +169,24 @@ private val Rect.width
 private val Rect.height
     get() = y2 - y1
 
-private fun Rect.asSvgTimelineTag() =
-    """<g>
-         <rect x="$x1" y="$y1" width="$width" height="$height" style="fill:rgba($fillColor,$alpha);"></rect>
-         <rect x="${x2 - 1}" y="$y1" width="2" height="$height" style="fill:rgba(0,0,0,1);"></rect>
-         <text x="${x1 + padding}" y="$y1Text" font-family="Verdana" font-size="$fontSize" fill="#000000" clip-path="url(#clip$clipIndex)">${timeline.name.escapeXml()}</text>
-         <text x="${x1 + padding}" y="${y1Text+fontSize * 0.8}" font-family="Verdana" font-size="$smallFontSize" fill="#000000" clip-path="url(#clip$clipIndex)">tid=${timeline.tid}</text>
+private fun Rect.asSvgTimelineTag(htmlEmbed: Boolean, timelineIndex: Int) : String {
+
+    fun listeners(): String {
+        if (!htmlEmbed) return ""
+
+        return """ onclick="onTimeBoxClick('$timelineIndex')" onmouseover="onTimeBoxHover('$timelineIndex')" onmouseout="onDefaultHint()""""
+    }
+
+    return """<g>
+         <rect x="$x1" y="$y1" width="$width" height="$height" style="fill:rgba($fillColor,$alpha);"${listeners()}></rect>
+         <rect x="${x2 - 1}" y="$y1" width="2" height="$height" style="fill:rgba(0,0,0,1);"${listeners()}></rect>
+         <text x="${x1 + padding}" y="$y1Text" font-family="Verdana" font-size="$fontSize" fill="#000000" clip-path="url(#clip$clipIndex)"${listeners()}>${timeline.name.escapeXml()}</text>
+         <text x="${x1 + padding}" y="${y1Text + fontSize * 0.8}" font-family="Verdana" font-size="$smallFontSize" fill="#000000" clip-path="url(#clip$clipIndex)"${listeners()}>tid=${timeline.tid}</text>
          <clipPath id="clip$clipIndex">
            <rect x="$x1" y="$y1" width="$width" height="$height" class="clipRect"/>
          </clipPath>
        </g>""".trimIndent()
+}
 
 
 private fun Long.between(lower: Long, upper: Long): Boolean = this > lower && this < upper
@@ -288,7 +296,7 @@ private fun htmlTemplate(report: SvgReport) = """
 <body>
 
   <div class="sticky">
-    <div style="font-size: 10px; color: #777; padding-left: 10px">Zoom In [Hold Left Click] | Zoom Out [Double Left Click]</div>
+    <div id="navHint" style="font-size: 10px; color: #777; padding-left: 10px; height: 10px;">Zoom In [Hold Left Click] | Zoom Out [Double Left Click]</div>
     <div>
     <svg id="navSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${report.svgWidthNormalized} ${report.timelineAxisHeight}" width="${report.svgWidthNormalized}" height="${report.timelineAxisHeight}">
       <g id="timeaxis"></g>
@@ -300,6 +308,7 @@ $report
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.7.1/svg.min.js"></script>
 <script type="text/javascript">
+    var defaultHint = "Zoom In [Hold Left Click] | Zoom Out [Double Left Click]"
     var svg = document.getElementById('stopwatch')
     var stopwatch = SVG.get('stopwatch')
     var timeaxis = SVG.adopt(svg.getElementById('timeaxis'))
@@ -316,6 +325,34 @@ $report
     var totalDurationMs = ${report.totalDurationMs}
     var xAxisHeight = ${report.xAxisHeight}
     var timelineAxisHeight = ${report.timelineAxisHeight}
+
+    function d(name, tid, time) {
+    	var d = {}
+    	d["name"] = name
+    	d["tid"] = tid
+    	d["time"] = time
+    	return d
+    }
+
+    function onTimeBoxClick(index) {
+    	// TODO something great
+    }
+
+    var data = [
+      ${report.timelines.mapIndexed { index, timeline ->
+    """d("${timeline.name}", ${timeline.tid}, ${timeline.duration})"""
+        }.joinToString(separator = ",\n")
+      }
+    ]
+
+    function onTimeBoxHover(index) {
+    	var d = data[index]
+    	navHint.innerText = "tid = " + d.tid + " | " + d.time + "ms | " + d.name
+    }
+
+    function onDefaultHint() {
+    	navHint.innerText = defaultHint
+    }
 
     var lastScale
     function drawTimeAxis(scale) {
@@ -359,6 +396,7 @@ $report
     }
 
     drawTimeAxis(1.0)
+    onDefaultHint()
 
     var maxScale = Math.max(1.0, Math.round((totalDurationMs/width)*12))
 
