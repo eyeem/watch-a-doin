@@ -41,7 +41,6 @@ loopWatch {
     for (i in 0 until 4) {
         "⏭️ iteration $i".watch {
             expensiveOperation("🕰️".watch)
-
             moreExpensiveOperation("🕰 x3".watch)
         }
     }
@@ -75,3 +74,47 @@ Will print this:
 and create the following SVG:
 
 ![Screenshot 2019-07-22 at 17 53 01](https://user-images.githubusercontent.com/121164/61646360-a76e8780-aca9-11e9-92f3-cf3181f259d2.png)
+
+### Timeouts
+
+Some stopwatches might finish after others, consider using launch. Some might never finish.
+
+```kotlin
+val baseWatch = Stopwatch("runBlocking")
+
+baseWatch {
+    runBlocking {
+        "launch".watch {
+            launch {
+                "insideLaunch".watch {
+                    delay(500)
+                }
+            }
+        }
+    }
+}
+```
+
+![Screenshot 2019-07-29 at 12 28 44](https://user-images.githubusercontent.com/121164/62041686-80a9d700-b1fc-11e9-8e8c-914382c9e182.png)
+
+Now if we make `insideLaunch` watch never call end (e.g. due to some error) the top watch will timeout it on its end.
+
+
+```kotlin
+val insideWatch = "insideLaunch".watch
+insideWatch.start()
+delay(500)
+// insideWatch.end()
+```
+
+![Screenshot 2019-07-29 at 12 33 44](https://user-images.githubusercontent.com/121164/62041942-22312880-b1fd-11e9-98dc-e22618e860b4.png)
+
+Timeout timelines are marked red.
+
+You can explicitly timeout any watch with `timeout()` method or timeout any running child watches with `timeoutAllRunningChildren()`.
+
+__NOTE__: If `end()` is called after `timeout()` it will only update timeout time.
+
+## More Resources
+
+- [Watcha Doin'? Inspecting Kotlin coroutines with timing graphs.](https://proandroiddev.com/watcha-doin-inspecting-kotlin-coroutines-with-timing-graphs-1676132d940f) - Medium Article

@@ -28,7 +28,7 @@ suspend fun moreExpensiveDelay(stopwatch: Stopwatch): Int = stopwatch {
 
 class WatchadoinTest {
 
-    val dryRun = true
+    val dryRun = false
 
     @Before
     fun warmUp() {
@@ -195,6 +195,45 @@ class WatchadoinTest {
         }
 
         loopWatch.asTestReport("test7", dryRun)
+    }
+
+    @Test
+    fun `Test 8 - Timeout Scenario 1`() {
+        val baseWatch = Stopwatch("runBlocking")
+
+        baseWatch {
+            runBlocking {
+                "launch".watch {
+                    launch {
+                        "insideLaunch".watch {
+                            delay(500)
+                        }
+                    }
+                }
+            }
+        }
+
+        baseWatch.asTestReport("test8", dryRun)
+    }
+
+    @Test
+    fun `Test 9 - Timeout Scenario 2, end never called`() {
+        val baseWatch = Stopwatch("runBlocking")
+
+        baseWatch {
+            runBlocking {
+                "launch".watch {
+                    launch {
+                        val insideWatch = "insideLaunch".watch
+                        insideWatch.start()
+                        delay(500)
+                        // insideWatch.end()
+                    }
+                }
+            }
+        }
+
+        baseWatch.asTestReport("test9", dryRun)
     }
 }
 

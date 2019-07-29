@@ -2,7 +2,6 @@ package com.eyeem.watchadoin
 
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.max
-import kotlin.math.roundToLong
 
 /**
  *
@@ -12,24 +11,24 @@ import kotlin.math.roundToLong
  *
  * @param name The name of this stopwatch
  */
-class Stopwatch(val name: String) {
+class Stopwatch(val name: String, private val parent: Stopwatch? = null) {
 
     /**
      * Thread on which this stopwatch was executed
      */
-    var tid : Long = 0
+    var tid: Long = 0
         private set
 
     /**
      * Time of start
      */
-    var start : Long = 0
+    var start: Long = -1L
         private set
 
     /**
      * Time of end
      */
-    private var end : Long = 0
+    private var end: Long = -1L
 
     /**
      * Whether or not this stopwatch is still running
@@ -39,7 +38,7 @@ class Stopwatch(val name: String) {
     /**
      * Time at which timeout occurred
      */
-    var timeoutAt : Long = 0L
+    var timeoutAt: Long = -1L
         private set
 
     /**
@@ -60,7 +59,7 @@ class Stopwatch(val name: String) {
      * ```
      * @param block block of code to be measured
      */
-    inline operator fun <T> invoke(block: Stopwatch.() -> T) : T {
+    inline operator fun <T> invoke(block: Stopwatch.() -> T): T {
         start()
         val t = block()
         end()
@@ -81,41 +80,55 @@ class Stopwatch(val name: String) {
      * End watch measurement
      */
     fun end() {
-        if (!isRunning) return
+        if (!isRunning) {
+            if (timeoutAt > -1L) {
+                // we finished but we managed to get timed out
+                timeoutAt = System.currentTimeMillis()
+            }
+            return
+        }
         end = System.currentTimeMillis()
         isRunning = false
+
+        // check recursively for watches that did not call end()
+        if (parent == null) {
+            timeoutAllRunningChildren(end)
+        }
+    }
+
+    /**
+     * Times out all running child watches
+     */
+    fun timeoutAllRunningChildren(timeoutAt: Long) {
         children.forEach {
             if (it.isRunning) {
-                it.timeout(false)
+                it.timeout(timeoutAt)
             }
+            it.timeoutAllRunningChildren(timeoutAt)
         }
     }
 
     /**
      * Total duration of the stopwatch
      */
-    fun duration() : Long = max(max(end, timeoutAt) - start, 0)
+    fun duration(): Long = max(max(end, timeoutAt) - start, 0)
 
     /**
      * Timeout the watch
      *
      * @param shouldEnd force stop watch otherwise it will wait till [end] is called
      */
-    fun timeout(shouldEnd: Boolean = true) {
-        if (!isRunning || timeoutAt > 0L) return
-        if (shouldEnd) {
-            end = System.currentTimeMillis()
-            isRunning = false
-        }
-        timeoutAt = System.currentTimeMillis()
-        children.forEach { it.timeout(false) }
+    fun timeout(now: Long = System.currentTimeMillis()) {
+        if (!isRunning) return
+        isRunning = false
+        timeoutAt = now
     }
 
     val String.watch: Stopwatch
         get() = createChild(this)
 
-    private fun createChild(name: String) : Stopwatch {
-        val childStopwatch = Stopwatch(name)
+    private fun createChild(name: String): Stopwatch {
+        val childStopwatch = Stopwatch(name, this)
         children.add(childStopwatch)
         return childStopwatch
     }
@@ -123,19 +136,23 @@ class Stopwatch(val name: String) {
     /**
      * Produce a report for this [Stopwatch] and its children
      */
-     fun timelines(nestLvl: Int = 0, startTime: Long = start, parent: Timeline? = null, includeParent : Boolean = false) : List<Timeline> {
+    fun timelines(
+        nestLvl: Int = 0,
+        startTime: Long = start,
+        parent: Timeline? = null,
+        includeParent: Boolean = false
+    ): List<Timeline> {
         val relativeStartTime = start - startTime
-        //
 
         val timelines = ArrayList<Timeline>()
         val timeline = Timeline(
-                name = name,
-                tid = tid,
-                duration = duration(),
-                relativeStart = relativeStartTime,
-                timeout = timeoutAt > 0L,
-                parent = if (includeParent) parent else null,
-                nestLvl = nestLvl
+            name = name,
+            tid = tid,
+            duration = duration(),
+            relativeStart = relativeStartTime,
+            timeout = timeoutAt > 0L && end < 0L,
+            parent = if (includeParent) parent else null,
+            nestLvl = nestLvl
         )
         timelines += timeline
 
@@ -146,7 +163,7 @@ class Stopwatch(val name: String) {
         return timelines
     }
 
-    fun toStringPretty() : String = timelines().joinToString(separator = "\n") { it.report() }
+    fun toStringPretty(): String = timelines().joinToString(separator = "\n") { it.report() }
 
     companion object {
         /**
@@ -180,7 +197,7 @@ class Stopwatch(val name: String) {
          * }
          * ```
          */
-        fun bastard(parent: Stopwatch, name: String) : Stopwatch = parent.createChild(name)
+        fun bastard(parent: Stopwatch, name: String): Stopwatch = parent.createChild(name)
     }
 }
 
@@ -196,18 +213,19 @@ class Stopwatch(val name: String) {
  * @param nestLvl nesting level related to the first timeline in the group
  */
 data class Timeline(
-        val name: String,
-        val tid: Long,
-        val duration : Long,
-        val relativeStart : Long,
-        val timeout: Boolean,
-        val parent: Timeline?,
-        val nestLvl: Int) {
+    val name: String,
+    val tid: Long,
+    val duration: Long,
+    val relativeStart: Long,
+    val timeout: Boolean,
+    val parent: Timeline?,
+    val nestLvl: Int
+) {
 
     /**
      * One liner about this timeline
      */
-    fun report() : String = "${" ".repeat(nestLvl)}$name [${duration}ms @${relativeStart}ms]${if (timeout) "!!" else ""}"
+    fun report(): String = "${" ".repeat(nestLvl)}$name [${duration}ms @${relativeStart}ms]${if (timeout) "!!" else ""}"
 }
 
 
