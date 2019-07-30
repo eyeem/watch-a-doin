@@ -1,6 +1,6 @@
 # Watch-A-Doin'?
 
-![](https://media.giphy.com/media/l0MYOUI5XfRk4LLWM/giphy.gif)
+![](https://user-images.githubusercontent.com/121164/62126227-7c9ab980-b2cf-11e9-970b-316bd8028ba7.png)
 
 Simple Kotlin library that can be used to monitor timings of some expensive operations and nested calls they make.
 
