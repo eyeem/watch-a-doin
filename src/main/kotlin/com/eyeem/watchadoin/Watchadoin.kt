@@ -121,11 +121,11 @@ class Stopwatch(val name: String, private val parent: Stopwatch? = null) {
     /**
      * Total duration of the stopwatch
      */
-    fun duration(): Long {
+    fun duration(): Duration {
         return if(timeElapsed > timeoutAt) {
-            timeElapsed.toLongMilliseconds()
+            timeElapsed
         }else {
-            timeoutAt.toLongMilliseconds()
+            timeoutAt
         }
     }
 
@@ -226,10 +226,11 @@ class Stopwatch(val name: String, private val parent: Stopwatch? = null) {
  * @param parent parent of this timeline
  * @param nestLvl nesting level related to the first timeline in the group
  */
+@UseExperimental(ExperimentalTime::class)
 data class Timeline(
     val name: String,
     val tid: Long,
-    val duration: Long,
+    val duration: Duration,
     val relativeStart: Long,
     val timeout: Boolean,
     val parent: Timeline?,
