@@ -23,7 +23,7 @@ fun Stopwatch.asTraceEventsReport() : TraceEventsReport {
     return TraceEventsReport(traceEvents = traces)
 }
 
-private fun Stopwatch.traceEventList(startTime: Long = start) : List<TraceEvent> = timelines().map {
+private fun Stopwatch.traceEventList(relativeStartTime: Long = 0) : List<TraceEvent> = timelines().map {
     TraceEvent(
         name = it.name,
         cat = "watchadoin",
