@@ -42,7 +42,7 @@ class SvgReport(val timelines: List<Timeline>, htmlEmbed: Boolean = false) {
 
     init {
         xScale = 1.0f
-        totalDurationMs = timelines.map { it.duration.toLongMilliseconds() + it.relativeStart }.maxBy { it }
+        totalDurationMs = timelines.map { it.duration.toLongMilliseconds() + it.relativeStart.toLongMilliseconds() }.maxBy { it }
             ?: throw IllegalStateException("no maximum found")
         val scaleSteps = totalDurationMs / scaleGridDistance
         svgWidth = totalDurationMs + padding * 2
@@ -60,7 +60,7 @@ class SvgReport(val timelines: List<Timeline>, htmlEmbed: Boolean = false) {
 
             val _y1 = (heightIndex + 1) * padding + heightIndex * timelineHeight
             val _y1Text = (_y1 + (timelineHeight - fontSize)).toLong()
-            val _x1 = padding + (timeline.relativeStart * xScale).toLong()
+            val _x1 = padding + (timeline.relativeStart.toLongMilliseconds() * xScale).toLong()
             val _rectWidth = (timeline.duration.toLongMilliseconds() * xScale).toLong()
             val _rectHeight = timelineHeight.toLong()
 
@@ -218,10 +218,10 @@ private fun Long.between(lower: Long, upper: Long): Boolean = this > lower && th
 
 @UseExperimental(ExperimentalTime::class)
 private infix fun Timeline.collidesWith(other: Timeline): Boolean {
-    val start = this.relativeStart
-    val end = this.relativeStart + this.duration.toLongMilliseconds()
-    val otherStart = other.relativeStart
-    val otherEnd = other.relativeStart + other.duration.toLongMilliseconds()
+    val start = this.relativeStart.toLongMilliseconds()
+    val end = this.relativeStart.toLongMilliseconds() + this.duration.toLongMilliseconds()
+    val otherStart = other.relativeStart.toLongMilliseconds()
+    val otherEnd = other.relativeStart.toLongMilliseconds() + other.duration.toLongMilliseconds()
 
     if (start == otherStart || end == otherEnd) return true
 

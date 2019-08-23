@@ -29,6 +29,8 @@ class Stopwatch(val name: String, private val parent: Stopwatch? = null) {
      */
     private lateinit var mark: ClockMark
 
+    private var relativeToParent: Duration = Duration.ZERO
+
     /**
      * Duration of clock
      * [Duration.ZERO] until Stopwatch completed
@@ -77,7 +79,9 @@ class Stopwatch(val name: String, private val parent: Stopwatch? = null) {
     fun start() {
         if (isRunning) return
         mark = MonoClock.markNow()
-//        start = System.currentTimeMillis()
+        parent?.mark?.elapsedNow()?.let {
+            relativeToParent = it
+        }
         isRunning = true
         tid = Thread.currentThread().id
     }
@@ -150,7 +154,7 @@ class Stopwatch(val name: String, private val parent: Stopwatch? = null) {
      */
     fun timelines(
         nestLvl: Int = 0,
-        relativeStartTime: Long = 0,
+        relativeStartTime: Duration = Duration.ZERO,
         parent: Timeline? = null,
         includeParent: Boolean = false
     ): List<Timeline> {
@@ -159,7 +163,7 @@ class Stopwatch(val name: String, private val parent: Stopwatch? = null) {
             name = name,
             tid = tid,
             duration = duration(),
-            relativeStart = relativeStartTime,
+            relativeStart = relativeStartTime + relativeToParent,
             timeout = timeoutAt > Duration.ZERO && timeElapsed <= Duration.ZERO,
             parent = if (includeParent) parent else null,
             nestLvl = nestLvl
@@ -227,7 +231,7 @@ data class Timeline(
     val name: String,
     val tid: Long,
     val duration: Duration,
-    val relativeStart: Long,
+    val relativeStart: Duration,
     val timeout: Boolean,
     val parent: Timeline?,
     val nestLvl: Int
