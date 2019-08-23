@@ -31,7 +31,7 @@ private fun Stopwatch.traceEventList(relativeStartTime: Long = 0) : List<TraceEv
         cat = "watchadoin",
         ph = "X",
         ts = it.relativeStart * 1000,
-        dur = it.duration.toLongNanoseconds(),
+        dur = it.duration.inMicroseconds.toLong(),
         pid = 1,
         tid = it.tid
     )

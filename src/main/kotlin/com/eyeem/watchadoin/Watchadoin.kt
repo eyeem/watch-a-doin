@@ -24,19 +24,16 @@ class Stopwatch(val name: String, private val parent: Stopwatch? = null) {
     var tid: Long = 0
         private set
 
+    /**
+     * Marks the time of start
+     */
     private lateinit var mark: ClockMark
+
+    /**
+     * Duration of clock
+     * [Duration.ZERO] until Stopwatch completed
+     */
     private var timeElapsed: Duration = Duration.ZERO
-
-    /**
-     * Time of start
-     */
-//    var start: Long = -1L
-//        private set
-
-    /**
-     * Time of end
-     */
-//    private var end: Long = -1L
 
     /**
      * Whether or not this stopwatch is still running
@@ -97,7 +94,6 @@ class Stopwatch(val name: String, private val parent: Stopwatch? = null) {
             return
         }
         timeElapsed = mark.elapsedNow()
-//        end = System.currentTimeMillis()
         isRunning = false
 
         // check recursively for watches that did not call end()
