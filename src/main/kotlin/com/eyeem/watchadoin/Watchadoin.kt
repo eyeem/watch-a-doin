@@ -2,10 +2,7 @@ package com.eyeem.watchadoin
 
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.max
-import kotlin.time.ClockMark
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
-import kotlin.time.MonoClock
+import kotlin.time.*
 
 /**
  *
@@ -15,7 +12,7 @@ import kotlin.time.MonoClock
  *
  * @param name The name of this stopwatch
  */
-@UseExperimental(ExperimentalTime::class)
+@OptIn(ExperimentalTime::class)
 class Stopwatch(val name: String, private val parent: Stopwatch? = null) {
 
     /**
@@ -27,7 +24,7 @@ class Stopwatch(val name: String, private val parent: Stopwatch? = null) {
     /**
      * Marks the time of start
      */
-    private lateinit var mark: ClockMark
+    private lateinit var mark: TimeMark
 
     private var relativeToParent: Duration = Duration.ZERO
 
@@ -78,7 +75,7 @@ class Stopwatch(val name: String, private val parent: Stopwatch? = null) {
      */
     fun start() {
         if (isRunning) return
-        mark = MonoClock.markNow()
+        mark = TimeSource.Monotonic.markNow()
         parent?.mark?.elapsedNow()?.let {
             relativeToParent = it
         }
@@ -226,7 +223,7 @@ class Stopwatch(val name: String, private val parent: Stopwatch? = null) {
  * @param parent parent of this timeline
  * @param nestLvl nesting level related to the first timeline in the group
  */
-@UseExperimental(ExperimentalTime::class)
+@OptIn(ExperimentalTime::class)
 data class Timeline(
     val name: String,
     val tid: Long,

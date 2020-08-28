@@ -8,7 +8,7 @@ import kotlin.time.ExperimentalTime
  *
  * https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/edit
  *
- * WANRING: Looks super bad if you try using it with one thread and multiple coroutines running in parallel.
+ * WARNING: Looks super bad if you try using it with one thread and multiple coroutines running in parallel.
  *
  * USAGE: open chrome and type `chrome://tracing` in the address bar
  */

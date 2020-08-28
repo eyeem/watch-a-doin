@@ -10,7 +10,7 @@ import kotlin.time.ExperimentalTime
  *
  * @param timelines output of [Stopwatch.report]
  */
-@UseExperimental(ExperimentalTime::class)
+@OptIn(ExperimentalTime::class)
 class SvgReport(val timelines: List<Timeline>, htmlEmbed: Boolean = false) {
 
     val padding = 10
