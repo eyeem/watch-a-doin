@@ -1,8 +1,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.3.50"
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.3.50"
+    kotlin("jvm") version "1.3.72"
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.3.72"
     maven
 }
 
@@ -28,4 +28,5 @@ dependencies {
 
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.freeCompilerArgs= listOf("-Xopt-in=kotlin.RequiresOptIn")
 }
