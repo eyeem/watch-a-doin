@@ -1,7 +1,6 @@
 package com.eyeem.watchadoin
 
 import kotlinx.serialization.Serializable
-import kotlin.time.ExperimentalTime
 
 /**
  * Support for Trace Event Format
@@ -24,14 +23,13 @@ fun Stopwatch.asTraceEventsReport() : TraceEventsReport {
     return TraceEventsReport(traceEvents = traces)
 }
 
-@UseExperimental(ExperimentalTime::class)
-private fun Stopwatch.traceEventList(relativeStartTime: Long = 0) : List<TraceEvent> = timelines().map {
+private fun Stopwatch.traceEventList(startTime: Long = start) : List<TraceEvent> = timelines().map {
     TraceEvent(
         name = it.name,
         cat = "watchadoin",
         ph = "X",
-        ts = it.relativeStart.inMicroseconds.toLong(),
-        dur = it.duration.inMicroseconds.toLong(),
+        ts = it.relativeStart * 1000,
+        dur = it.duration * 1000,
         pid = 1,
         tid = it.tid
     )
