@@ -3,14 +3,12 @@ package com.eyeem.watchadoin
 import java.io.File
 import kotlin.math.max
 import kotlin.math.roundToLong
-import kotlin.time.ExperimentalTime
 
 /**
  * Convert Timelines report to a simple SVG
  *
  * @param timelines output of [Stopwatch.report]
  */
-@UseExperimental(ExperimentalTime::class)
 class SvgReport(val timelines: List<Timeline>, htmlEmbed: Boolean = false) {
 
     val padding = 10
@@ -42,7 +40,7 @@ class SvgReport(val timelines: List<Timeline>, htmlEmbed: Boolean = false) {
 
     init {
         xScale = 1.0f
-        totalDurationMs = timelines.map { it.duration.toLongMilliseconds() + it.relativeStart.toLongMilliseconds() }.maxBy { it }
+        totalDurationMs = timelines.map { it.duration + it.relativeStart }.maxBy { it }
             ?: throw IllegalStateException("no maximum found")
         val scaleSteps = totalDurationMs / scaleGridDistance
         svgWidth = totalDurationMs + padding * 2
@@ -60,8 +58,8 @@ class SvgReport(val timelines: List<Timeline>, htmlEmbed: Boolean = false) {
 
             val _y1 = (heightIndex + 1) * padding + heightIndex * timelineHeight
             val _y1Text = (_y1 + (timelineHeight - fontSize)).toLong()
-            val _x1 = padding + (timeline.relativeStart.toLongMilliseconds() * xScale).toLong()
-            val _rectWidth = (timeline.duration.toLongMilliseconds() * xScale).toLong()
+            val _x1 = padding + (timeline.relativeStart * xScale).toLong()
+            val _rectWidth = (timeline.duration * xScale).toLong()
             val _rectHeight = timelineHeight.toLong()
 
             val rect = Rect(
@@ -216,12 +214,11 @@ private fun Timeline.ancestors(list : ArrayList<Timeline> = ArrayList()) : List<
 
 private fun Long.between(lower: Long, upper: Long): Boolean = this > lower && this < upper
 
-@UseExperimental(ExperimentalTime::class)
 private infix fun Timeline.collidesWith(other: Timeline): Boolean {
-    val start = this.relativeStart.toLongMilliseconds()
-    val end = this.relativeStart.toLongMilliseconds() + this.duration.toLongMilliseconds()
-    val otherStart = other.relativeStart.toLongMilliseconds()
-    val otherEnd = other.relativeStart.toLongMilliseconds() + other.duration.toLongMilliseconds()
+    val start = this.relativeStart
+    val end = this.relativeStart + this.duration
+    val otherStart = other.relativeStart
+    val otherEnd = other.relativeStart + other.duration
 
     if (start == otherStart || end == otherEnd) return true
 
